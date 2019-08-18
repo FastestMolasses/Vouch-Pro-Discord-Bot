@@ -1,11 +1,11 @@
 #cython: language_level=3
 
 import data
+import config
 import discord
 import discordCommands
 
-PREFIX = '-'
-DISCORD_TOKEN = ''
+PREFIX = '+'
 
 
 class DiscordBot(discord.Client):
@@ -49,7 +49,7 @@ class DiscordBot(discord.Client):
 
 
 def main():
-    DiscordBot().run(DISCORD_TOKEN)
+    DiscordBot().run(config.DISCORD_TOKEN)
 
 
 if __name__ == '__main__':
