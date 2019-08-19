@@ -13,18 +13,34 @@ async def admin():
     pass
 
 
-async def dwc():
+async def dwc(user: discord.User, channel: discord.TextChannel):
     '''
         Toggles Deal With Caution role to mentioned user
     '''
-    pass
+    u = User(user.id)
+    u.setDWC(not u.dwc)
+
+    if u.dwc:
+        embed = newEmbed(description='Added DWC!', color=RED)
+    else:
+        embed = newEmbed(description='Removed DWC!', color=GREEN)
+
+    await channel.send(embed=embed)
 
 
-async def scammer():
+async def scammer(user: discord.User, channel: discord.TextChannel):
     '''
         Toggles Scammer role to mentioned user
     '''
-    pass
+    u = User(user.id)
+    u.setScammer(not u.isScammer)
+
+    if u.dwc:
+        embed = newEmbed(description='Added Scammer!', color=RED)
+    else:
+        embed = newEmbed(description='Removed Scammer!', color=GREEN)
+
+    await channel.send(embed=embed)
 
 
 async def blacklist():
@@ -57,11 +73,16 @@ async def approve():
     pass
 
 
-async def reply():
+async def reply(targetUser: discord.User, message: str, channel: discord.TextChannel):
     '''
         Sends a message to a user, through the bot
     '''
-    pass
+    try:
+        targetUser.send(message)
+        embed = newEmbed(description='Sent message!', color=GREEN)
+        await channel.send(embed=embed)
+    except Exception:
+        await errorMessage('Could not send message to user!', channel)
 
 
 async def glist():
