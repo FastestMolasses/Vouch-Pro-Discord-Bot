@@ -1,32 +1,28 @@
 #cython: language_level=3
 
-import os
-import glob
 import data
-import string
-import random
 import discord
-import asyncio
-import discordHelper
+
+from discordHelper import User, newEmbed, errorMessage, RED, BLUE, GREEN, YELLOW
 
 
 async def admin():
     '''
-        Gives admin privileges to mentioned user
+        Toggles admin privileges to mentioned user
     '''
     pass
 
 
 async def dwc():
     '''
-        Gives Deal With Caution role to mentioned user
+        Toggles Deal With Caution role to mentioned user
     '''
     pass
 
 
 async def scammer():
     '''
-        Gives Scammer role to mentioned user
+        Toggles Scammer role to mentioned user
     '''
     pass
 

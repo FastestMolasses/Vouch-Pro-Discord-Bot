@@ -12,7 +12,8 @@ YELLOW = 0xFFB400
 class User:
     def __init__(self, userID: int):
         self.userID = int(userID)
-        self.users = data.loadJSON(data.DATABASE_FILENAME)['Users']
+        self.allData = data.loadJSON(data.DATABASE_FILENAME)
+        self.users = self.allData['Users']
 
         # Find the user in the database
         for i in self.users:
@@ -43,7 +44,7 @@ class User:
         self.vouches.append(Vouch(vouchData))
         self.save()
 
-    def redeemToken(self, token: str):
+    def redeemToken(self, token: str) -> bool:
         '''
             Transfers all previous profile data
             to the current one
@@ -54,8 +55,11 @@ class User:
                 self.vouches.extend([Vouch(i) for i in x.get('Vouches')])
                 del self.users[i]
                 break
+        else:
+            return False
 
         self.save()
+        return True
 
     def setScammer(self, scammer: bool):
         '''
@@ -69,6 +73,13 @@ class User:
             Sets the Deal With Caution flag on the user
         '''
         self.dwc = dwc
+        self.save()
+
+    def setLink(self, link: str):
+        '''
+            Updates the link of the user
+        '''
+        self.link = link
         self.save()
 
     def removeVouch(self, vouchID: int):

@@ -8,7 +8,7 @@ import random
 import discord
 import asyncio
 
-from discordHelper import newEmbed, errorMessage, RED, BLUE, GREEN, YELLOW
+from discordHelper import User, newEmbed, errorMessage, RED, BLUE, GREEN, YELLOW
 
 
 async def vouch(user: discord.User, mentionedUser:
@@ -16,76 +16,101 @@ async def vouch(user: discord.User, mentionedUser:
     '''
         Leaves a vouch for a user
     '''
+    # TODO: CHECK BLACKLIST FIRST
+    # Send embed to channel
     pass
 
 
-async def redeem(user: discord.User, token: str):
+async def redeem(user: discord.User, token: str, channel: discord.TextChannel):
     '''
         Redeems a token and transfers all vouches
         to the new account
     '''
-    # NOTE: CHECK IF USER EXISTS
-    pass
+    u = User(user.id)
+    success = u.redeemToken(token)
+    if success:
+        embed = newEmbed(description='Retrieved all vouches!',
+                         title='Token Redeemed', color=GREEN)
+    else:
+        embed = newEmbed(description='Could not find token!',
+                         title='Error', color=RED)
+
+    await channel.send(embed=embed)
 
 
-async def link(user: discord.User, link: str):
+async def link(user: discord.User, link: str, channel: discord.TextChannel):
     '''
         Links a Nulled.to account to the profile
     '''
-    # NOTE: CHECK IF USER EXISTS
-    pass
+    u = User(user.id)
+    if 'nulled.to' not in link:
+        errorMessage('Please provide a proper nulled.to link!', channel)
+        return
+
+    u.setLink(link)
+    embed = newEmbed(description='Successfully set profile link!', color=GREEN)
+    await channel.send(embed=embed)
 
 
-async def profile(user: discord.User):
+async def profile(user: discord.User, bcGuild: discord.Guild,
+                  channel: discord.TextChannel):
     '''
-        If a user is mentioned, it will display their profile
+        If a user is mentioned, it will display their profiles
         details. If a user isn't mentioned, then the author's
         profile is displayed.
     '''
-    # NOTE: CHECK IF USER EXISTS
-    pass
+    u = User(user.id)
 
+    embed = newEmbed(title=f'{user.name}\'s Profile', color=(
+        RED if u.isScammer else GREEN))
+    embed.add_field(name='Vouch Information',
+                    value=f'**Positive:** {u.posVouchCount}\n**Negative:** {u.negVouchCount}\n\n**Total:** {len(u.vouches)}')
+    embed.add_field(
+        name='Tags', value=f'**Scammer:** {u.isScammer}\n**DWC:** {u.dwc}\n**Nulled Link:** [Click Here]({u.link})')
+    comments = '\n'.join(f'{i+1}{x.message}' for i, x in enumerate(u.vouches))
+    print(comments)
+    embed.add_field(name='Comments', value=comments, inline=False)
+    embed.set_footer(text='Endorsed by BCN')
 
-async def redeem2(country: str, email: str, key: str,
-                  channel: discord.channel, user: discord.User):
-    embed = newEmbed(f'{user.mention} Loading...', color=YELLOW)
-    sentEmbed = await channel.send(embed=embed)
+    badges = []
+    # bcGuild = self.bot.get_guild(583416004974084107)
+    supporter_role = discord.utils.get(
+        bcGuild.roles, name='Supporters | Partners')
+    staff_role = discord.utils.get(bcGuild.roles, name='VP Staff')
+    developer_role = discord.utils.get(bcGuild.roles, name='Developer | Devs')
+    owner_role = discord.utils.get(bcGuild.roles, name='Owner | Founder')
+    sl_staff_role = discord.utils.get(bcGuild.roles, name='SL Staff')
+    trusted_role = discord.utils.get(bcGuild.roles, name='Trusted')
 
-    while True:
-        try:
-            # Check if we have the account in stock
-            accounts = data.getAccountsStock()
-            if accounts.get(country, 0) == 0:
-                embed = newEmbed(f'{user.mention} This country is out of stock!',
-                                 color=RED,
-                                 title='Error')
-                await sentEmbed.edit(embed=embed)
-                return False, ''
+    for member in bcGuild.members:
+        if member == user:
+            if owner_role in member.roles:
+                badges.append(
+                    '<:gem:5987915527222722861>**Owner**<:gem:598791552722272286>')
+            if supporter_role in member.roles:
+                badges.append(
+                    '<:beginner:598389073807278091>**Supporter**<:beginner:598389073807278091>')
+            if staff_role in member.roles:
+                badges.append(
+                    '<:beginner:598389073807278091>**Vouch Pro Staff**<:beginner:598389073807278091>')
+            if developer_role in member.roles:
+                badges.append(
+                    '<:beginner:598389073807278091>**Developer**<:beginner:598389073807278091>')
+            if sl_staff_role in member.roles:
+                badges.append(
+                    '<:beginner:598389073807278091>**SL Staff**<:beginner:598389073807278091>')
+            if trusted_role in member.roles:
+                badges.append(
+                    '<:star2:598788570437779495>**Trusted**<:star2:598788570437779495>')
 
-            # Get the account info
-            filename = os.path.join(
-                data.ACCOUNTS_FOLDERNAME, f'{country}.txt')
-            d = data.getLineFromTextFile(filename)
-            info = [i.strip() for i in d.split('|')]
-            account, city, zipcode = info[0], info[4], info[5]
+    formattedBadges = '\n'.join(badges)
+    if len(badges) == 0:
+        formattedBadges = 'No badges given.'
 
-            if True:
-                embed = newEmbed(
-                    f'{city}\n{zipcode}', color=GREEN)
-                await user.send(embed=embed)
-                return True, account
-            else:
-                data.deleteLineFromTextFile(d, filename)
-        except Exception as e:
-            print(e)
+    embed.add_field(name='Badges', value=formattedBadges, inline=False)
+    embed.set_author(name=str(user.id), icon_url=user.avatar_url)
+    embed.set_thumbnail(url=user.avatar_url)
 
-
-async def restock(account: str, channel: discord.channel):
-    country = [i.strip() for i in account.split('|')][1].upper()
-    fileName = os.path.join('', country + '.txt')
-    data.saveToTextFile(account, fileName)
-
-    embed = newEmbed(f'Saved account!', color=GREEN)
     await channel.send(embed=embed)
 
 
@@ -139,7 +164,3 @@ async def help(prefix: str, channel: discord.TextChannel, isMaster: bool = False
                         inline=False)
 
     await channel.send(embed=embed)
-
-
-def generateToken() -> str:
-    return ''.join(random.choices(string.hexdigits, k=16)).upper()
