@@ -3,7 +3,8 @@
 import data
 import config
 import discord
-import discordCommands
+import userCommands
+import adminCommands
 
 PREFIX = '+'
 
@@ -12,6 +13,7 @@ class DiscordBot(discord.Client):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
+        # TODO: LOAD IDS
         self.channels = []
         self.masterIDs = []
 
@@ -35,15 +37,70 @@ class DiscordBot(discord.Client):
 
         # =====================================================
 
-        if loweredMsg.startswith(f'{PREFIX}'):
+        if loweredMsg.startswith(f'{PREFIX}vouch'):
+            pass
+
+        # =====================================================
+
+        elif loweredMsg.startswith(f'{PREFIX}dwc'):
+            pass
+
+        # =====================================================
+
+        elif loweredMsg.startswith(f'{PREFIX}pending'):
+            pass
+
+        # =====================================================
+
+        elif loweredMsg.startswith(f'{PREFIX}reply'):
+            pass
+
+        # =====================================================
+
+        elif loweredMsg.startswith(f'{PREFIX}remove'):
+            pass
+
+        # =====================================================
+
+        elif loweredMsg.startswith(f'{PREFIX}token'):
+            pass
+
+        # =====================================================
+
+        elif loweredMsg.startswith(f'{PREFIX}admin'):
+            pass
+
+        # =====================================================
+
+        elif loweredMsg.startswith(f'{PREFIX}redeem'):
+            pass
+
+        # =====================================================
+
+        elif loweredMsg.startswith(f'{PREFIX}blacklist'):
+            pass
+
+        # =====================================================
+
+        elif loweredMsg.startswith(f'{PREFIX}approve'):
+            pass
+
+        # =====================================================
+
+        elif loweredMsg.startswith(f'{PREFIX}deny'):
+            pass
+
+        # =====================================================
+
+        elif loweredMsg.startswith(f'{PREFIX}glist'):
             pass
 
         # =====================================================
 
         elif loweredMsg.startswith(f'{PREFIX}help'):
-            await discordCommands.help(PREFIX,
-                                       message.channel,
-                                       (message.author.id in self.masterIDs))
+            await userCommands.help(PREFIX,
+                                    message.channel,
+                                    (message.author.id in self.masterIDs))
 
         # =====================================================
 

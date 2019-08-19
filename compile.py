@@ -12,7 +12,7 @@ from Cython.Distutils import build_ext
 from distutils.extension import Extension
 
 init(autoreset=True)
-HIDDEN_IMPORTS = "['data', 'discordCommands', 'json', 'sys', 'string', 'random', 'discord', 'colorama'],\n"
+HIDDEN_IMPORTS = "['data', 'userCommands', 'adminCommands', 'discordHelper', 'json', 'sys', 'string', 'random', 'discord', 'colorama'],\n"
 COMPILED_NAME = 'Vouch Pro Bot'
 PNAME_SHORT = COMPILED_NAME.replace(' ', '')
 
@@ -20,7 +20,9 @@ PNAME_SHORT = COMPILED_NAME.replace(' ', '')
 def cythonize():
     ext_modules = [
         Extension('data', ['data.py']),
-        Extension('discordCommands', ['discordCommands.py']),
+        Extension('discordHelper', ['discordHelper.py']),
+        Extension('userCommands', ['userCommands.py']),
+        Extension('adminCommands', ['adminCommands.py']),
         Extension('main', ['main.py']),
     ]
     setup(

@@ -5,7 +5,7 @@ import sys
 import glob
 import json
 
-CONFIG_FILENAME = 'config.json'
+DATABASE_FILENAME = 'database.json'
 
 
 def popTextFile(filename: str) -> str:
@@ -27,6 +27,15 @@ def popTextFile(filename: str) -> str:
     return popped
 
 
+def updateJson(path: str, data: dict):
+    try:
+        d = loadJSON(path)
+    except FileNotFoundError:
+        d = {}
+    d.update(data)
+    saveJSON(path, d)
+
+
 def getLineFromTextFile(filename: str) -> str:
     with open(getFileName(filename), 'r') as f:
         return f.readline().strip()
@@ -35,7 +44,7 @@ def getLineFromTextFile(filename: str) -> str:
 def deleteLineFromTextFile(line: str, filename: str):
     with open(getFileName(filename), 'r') as f:
         lines = f.readlines()
-    
+
     with open(getFileName(filename), 'w') as f:
         for i in lines:
             if line in i:
@@ -81,3 +90,10 @@ def isFileEmpty(fileName: str) -> bool:
 def loadJSON(fileName: str) -> dict:
     with open(getFileName(fileName), 'r') as f:
         return json.load(f)
+
+
+def saveJSON(path: str, data: dict):
+    path = getFileName(path)
+    with open(path, 'w') as f:
+        json.dump(data, f, indent=4)
+    return True
