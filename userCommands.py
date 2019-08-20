@@ -1,24 +1,61 @@
 #cython: language_level=3
 
-import os
-import glob
 import data
-import string
-import random
 import discord
-import asyncio
 
 from discordHelper import User, newEmbed, errorMessage, RED, BLUE, GREEN, YELLOW
 
 
-async def vouch(user: discord.User, mentionedUser:
-                discord.User, message: str):
+async def vouch(user: discord.User, targetUser:
+                discord.User, message: str,
+                curChannel: discord.TextChannel,
+                pendingVouchesChannel: discord.TextChannel):
     '''
         Leaves a vouch for a user
     '''
-    # TODO: CHECK BLACKLIST FIRST
-    # Send embed to channel
-    pass
+    u = User(user.id)
+    if user.id in u.allData['Blacklist']:
+        return
+
+    # Clean the message
+    isPositive = '-' not in message
+    if message[0] == '-' or message[0] == '+':
+        message = message[1:].strip()
+
+    # Save to pending vouches
+    d = data.loadJSON(data.DATABASE_FILENAME)
+    vouchNum: int = d['VouchCount'] + 1
+    vouch = {
+        'ID': vouchNum,
+        'Giver': user.id,
+        'Receiver': targetUser.id,
+        'IsPositive': isPositive,
+        'Message': message,
+    }
+    pendingVouches: list = d['PendingVouches']
+    pendingVouches.append(vouch)
+    data.updateJson(data.DATABASE_FILENAME, {
+        'PendingVouches': pendingVouches,
+        'VouchCount': vouchNum,
+    })
+
+    # Send embeds to the user
+    embed = newEmbed(description='Vouch is pending.', color=YELLOW)
+    embed2 = newEmbed(
+        description='Thank you for vouching using our bot, please remember when vouching for someone to state the deal when vouching for someone', color=GREEN)
+    await curChannel.send(embed=embed)
+    await curChannel.send(embed=embed2)
+
+    # Send embed to pending channel
+    embed = newEmbed(description='', title=f'Vouch ID: {vouchNum}')
+    embed.add_field(name='Type', value=(
+        'Pos' if isPositive else 'Neg'), inline=False)
+    embed.add_field(name='Receiver', value=targetUser.name, inline=False)
+    embed.add_field(name='Giver', value=user.name, inline=False)
+    embed.add_field(name='Comment', value=message, inline=False)
+    embed.set_footer(
+        text=f'+approve {vouchNum} | +deny {vouchNum} in order to assign this vouch')
+    await pendingVouchesChannel.send(embed=embed)
 
 
 async def redeem(user: discord.User, token: str, channel: discord.TextChannel):
@@ -44,7 +81,7 @@ async def link(user: discord.User, link: str, channel: discord.TextChannel):
     '''
     u = User(user.id)
     if 'nulled.to' not in link:
-        errorMessage('Please provide a proper nulled.to link!', channel)
+        await errorMessage('Please provide a proper nulled.to link!', channel)
         return
 
     u.setLink(link)
@@ -114,6 +151,14 @@ async def profile(user: discord.User, bcGuild: discord.Guild,
     await channel.send(embed=embed)
 
 
+async def token(user: discord.User, channel: discord.TextChannel):
+    u = User(user.id)
+    embed = newEmbed(description=f'Your token: {u.token}')
+    await user.send(embed=embed)
+    embed = newEmbed(description='Token was DM\'d to you.')
+    await channel.send(embed=embed)
+
+
 async def help(prefix: str, channel: discord.TextChannel, isMaster: bool = False):
     '''
         Displays all the commands that the user can use
@@ -123,6 +168,9 @@ async def help(prefix: str, channel: discord.TextChannel, isMaster: bool = False
 
     embed.add_field(name=f'{prefix}vouch [@user] [+ or -] [message]',
                     value='Leave a positive or negative vouch for the user.',
+                    inline=False)
+    embed.add_field(name=f'{prefix}token',
+                    value='View your current token.',
                     inline=False)
     embed.add_field(name=f'{prefix}redeem [token]',
                     value='Transfers all the vouches from another account to the current one.',

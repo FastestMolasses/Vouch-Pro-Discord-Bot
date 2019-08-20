@@ -25,6 +25,7 @@ class User:
             self.isNewUser = True
             userData = {}
 
+        self.isMaster = userID in self.allData['Masters']
         self.link = userData.get('Link', '')
         self.dwc = userData.get('DWC', False)
         self.isScammer = userData.get('Scammer', False)
@@ -91,6 +92,17 @@ class User:
                 del self.vouches[i]
                 break
         self.save()
+
+    def formatVouches(self) -> string:
+        '''
+            Lists the vouches in an organized string
+        '''
+        s = ''
+        for i in self.vouches:
+            rate = 'Pos' if i.isPositive else 'Neg'
+            s += f'**ID** {i.vouchID} **{rate}** | {i.message}\n'
+
+        return s.strip()
 
     def save(self):
         '''
