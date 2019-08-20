@@ -7,12 +7,13 @@ RED = 0xEF233C
 BLUE = 0x00A6ED
 GREEN = 0x3EC300
 YELLOW = 0xFFB400
+ORANGE = 0xFF7106
 
 
 class User:
-    def __init__(self, userID: int):
+    def __init__(self, userID: int, allData: dict = None):
         self.userID = int(userID)
-        self.allData = data.loadJSON(data.DATABASE_FILENAME)
+        self.allData = allData or data.loadJSON(data.DATABASE_FILENAME)
         self.users = self.allData['Users']
 
         # Find the user in the database
@@ -25,11 +26,13 @@ class User:
             self.isNewUser = True
             userData = {}
 
+        self.ignoreNotifications = userID in self.allData['NoNotificationIDs']
         self.isMaster = userID in self.allData['Masters']
         self.link = userData.get('Link', '')
         self.dwc = userData.get('DWC', False)
         self.isScammer = userData.get('Scammer', False)
         self.token = userData.get('Token', generateToken())
+        self.verified = userData.get('Verified', False)
         # Convert the data to Vouch objects
         self.vouches = [Vouch(i) for i in userData.get('Vouches', [])]
         self.posVouchCount = len([i for i in self.vouches if i.isPositive])
@@ -38,11 +41,11 @@ class User:
         if self.isNewUser:
             self.save()
 
-    def addVouch(self, vouchData: dict):
+    def addVouch(self, vouch):
         '''
             Adds a vouch to the user and database
         '''
-        self.vouches.append(Vouch(vouchData))
+        self.vouches.append(vouch)
         self.save()
 
     def redeemToken(self, token: str) -> bool:
@@ -83,6 +86,13 @@ class User:
         self.link = link
         self.save()
 
+    def setVerified(self, verified: bool):
+        '''
+            Updates the verification of the user
+        '''
+        self.verified = verified
+        self.save()
+
     def removeVouch(self, vouchID: int):
         '''
             Removes a vouch from the user and database
@@ -115,6 +125,7 @@ class User:
             'Vouches': [i.toDict() for i in self.vouches],
             'Link': self.link,
             'Scammer': self.isScammer,
+            'Verified': self.verified,
             'PositiveVouches': len([i for i in self.vouches if i.isPositive]),
             'NegativeVouches': len(self.vouches) - self.posVouchCount,
         }

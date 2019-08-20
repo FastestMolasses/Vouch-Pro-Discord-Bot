@@ -3,7 +3,7 @@
 import data
 import discord
 
-from discordHelper import User, newEmbed, errorMessage, RED, BLUE, GREEN, YELLOW
+from discordHelper import User, newEmbed, errorMessage, RED, BLUE, GREEN, YELLOW, ORANGE
 
 
 async def vouch(user: discord.User, targetUser:
@@ -80,37 +80,52 @@ async def link(user: discord.User, link: str, channel: discord.TextChannel):
         Links a Nulled.to account to the profile
     '''
     u = User(user.id)
-    if 'nulled.to' not in link:
-        await errorMessage('Please provide a proper nulled.to link!', channel)
-        return
-
     u.setLink(link)
     embed = newEmbed(description='Successfully set profile link!', color=GREEN)
     await channel.send(embed=embed)
 
 
-async def profile(user: discord.User, bcGuild: discord.Guild,
+async def profile(targetUser: discord.User, bcGuild: discord.Guild,
                   channel: discord.TextChannel):
     '''
         If a user is mentioned, it will display their profiles
         details. If a user isn't mentioned, then the author's
         profile is displayed.
     '''
-    u = User(user.id)
+    u = User(targetUser.id)
 
-    embed = newEmbed(title=f'{user.name}\'s Profile', color=(
-        RED if u.isScammer else GREEN))
+    # Decide a proper color
+    if u.isScammer:
+        color = RED
+    elif u.dwc:
+        color = ORANGE
+    elif u.negVouchCount > u.posVouchCount:
+        color = YELLOW
+    else:
+        color = GREEN
+
+    # Add relevant information
+    embed = newEmbed(description='', title='', color=color)
     embed.add_field(name='Vouch Information',
                     value=f'**Positive:** {u.posVouchCount}\n**Negative:** {u.negVouchCount}\n\n**Total:** {len(u.vouches)}')
-    embed.add_field(
-        name='Tags', value=f'**Scammer:** {u.isScammer}\n**DWC:** {u.dwc}\n**Nulled Link:** [Click Here]({u.link})')
-    comments = '\n'.join(f'{i+1}{x.message}' for i, x in enumerate(u.vouches))
-    print(comments)
-    embed.add_field(name='Comments', value=comments, inline=False)
-    embed.set_footer(text='Endorsed by BCN')
 
+    # Added Nulled link and verification
+    nulledLink = f'[Click Here]({u.link})' if u.link else 'None'
+    verification = ''
+    if u.link:
+        verification = '❌' if not u.verified else '✅'
+        verification = f'**Verification:**{verification}\n'
+
+    # Add tags and comments
+    embed.add_field(
+        name='Tags', value=f'**Scammer:** {u.isScammer}\n**DWC:** {u.dwc}\n{verification}**Nulled Link:** {nulledLink}')
+    comments = '\n'.join(f'{i+1}) {x.message}' for i,
+                         x in enumerate(u.vouches))
+    if comments:
+        embed.add_field(name='Comments', value=comments, inline=False)
+
+    # Gather possible roles
     badges = []
-    # bcGuild = self.bot.get_guild(583416004974084107)
     supporter_role = discord.utils.get(
         bcGuild.roles, name='Supporters | Partners')
     staff_role = discord.utils.get(bcGuild.roles, name='VP Staff')
@@ -119,8 +134,9 @@ async def profile(user: discord.User, bcGuild: discord.Guild,
     sl_staff_role = discord.utils.get(bcGuild.roles, name='SL Staff')
     trusted_role = discord.utils.get(bcGuild.roles, name='Trusted')
 
+    # Give out proper badges based on roles
     for member in bcGuild.members:
-        if member == user:
+        if member == targetUser:
             if owner_role in member.roles:
                 badges.append(
                     '<:gem:5987915527222722861>**Owner**<:gem:598791552722272286>')
@@ -144,9 +160,17 @@ async def profile(user: discord.User, bcGuild: discord.Guild,
     if len(badges) == 0:
         formattedBadges = 'No badges given.'
 
+    if u.isScammer:
+        authorName = f'💀{str(targetUser)} 💀'
+    elif u.dwc:
+        authorName = f'⚠️{str(targetUser)} ⚠️'
+    else:
+        authorName = f'{str(targetUser)}\'s Profile'
+
     embed.add_field(name='Badges', value=formattedBadges, inline=False)
-    embed.set_author(name=str(user.id), icon_url=user.avatar_url)
-    embed.set_thumbnail(url=user.avatar_url)
+    embed.set_author(name=authorName, icon_url=targetUser.avatar_url)
+    embed.set_thumbnail(url=targetUser.avatar_url)
+    embed.set_footer(text='Endorsed by BCN')
 
     await channel.send(embed=embed)
 
@@ -210,5 +234,20 @@ async def help(prefix: str, channel: discord.TextChannel, isMaster: bool = False
         embed.add_field(name=f'{prefix}glist',
                         value='Displays all the guilds that the bot is in.',
                         inline=False)
+
+    await channel.send(embed=embed)
+
+
+async def about(channel: discord.TextChannel, avatarUrl):
+    embed = newEmbed(description='', title='About Vouch Pro')
+
+    embed.add_field(name='What is it?', value=f'**Vouch Pro is a bot created to end the corruption from Vouch Bot.** The owners/staff of Vouch Bot have been found to extort users for their own personal advantage. As a result of this, the owner of BCN, Band1t contracted Reboot Services to create a new Vouch Bot with no corruption. This community-led bot has been paid for not only by the staff of BCN, but also you as a community. This bot has it\'s approval system viewable in public, unlike Vouch Bot which prefers to hide it behind the scenes.')
+    embed.add_field(name='How do I add it?',
+                    value='**Below is the invite URL:\n**https://discordapp.com/oauth2/authorize?client_id=597631338253778991&scope=bot&permissions=67584')
+    embed.set_image(
+        url='https://media.discordapp.net/attachments/588968667878785026/588968710648365066/Screenshot_2019-06-13_at_11.41.57_PM.png?width=1395&height=642')
+    embed.add_field(name='Proof Of Corruption', value='⬇')
+    embed.set_author(name='Vouch Pro', icon_url=avatarUrl)
+    embed.set_footer(text='Endorsed by BCN')
 
     await channel.send(embed=embed)

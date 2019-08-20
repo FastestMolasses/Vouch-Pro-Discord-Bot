@@ -9,14 +9,16 @@ import adminCommands
 from discordHelper import newEmbed, errorMessage, RED, BLUE, GREEN, YELLOW
 
 PREFIX = '+'
-PENDING_VOUCHES_CHANNELID = 612851594345840651
+PENDING_VOUCHES_CHANNELID = 613199581118988288
 
 
 class DiscordBot(discord.Client):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        self.masterIDs = data.loadJSON(data.DATABASE_FILENAME)['Masters']
+        allData = data.loadJSON(data.DATABASE_FILENAME)
+        self.masterIDs = allData['Masters']
+        self.staffIDs = allData['Staff']
 
     async def on_ready(self):
         '''
@@ -24,6 +26,34 @@ class DiscordBot(discord.Client):
         '''
         print(f'{self.user.name} Logged In!')
         print('--------------------\n')
+
+    async def on_reaction_add(self, reaction: discord.Reaction, user: discord.User):
+        # Unsubscribe from vouch notifications
+        description = reaction.message.embeds[0].description
+        if 'Received a' in description and reaction.emoji == '❌':
+            noNotifs = data.loadJSON(data.DATABASE_FILENAME)[
+                'NoNotificationIDs']
+            if user.id not in noNotifs:
+                embed = newEmbed(
+                    description='Unsubscribed from notifications!')
+                embed.set_footer(
+                    text='To resubscribe, react with ✅')
+                noNotifs.append(user.id)
+                data.updateJson(data.DATABASE_FILENAME, {
+                                'NoNotificationIDs': noNotifs})
+                await user.send(embed=embed)
+
+        # Resubscribe to vouch notifications
+        elif 'Unsubscribed' in description and reaction.emoji == '✅':
+            noNotifs = data.loadJSON(data.DATABASE_FILENAME)[
+                'NoNotificationIDs']
+            if user.id in noNotifs:
+                embed = newEmbed(description='Resubscribed to notifications!')
+                embed.set_footer(text='To unsubscribe, react with ❌')
+                noNotifs.remove(user.id)
+                data.updateJson(data.DATABASE_FILENAME, {
+                                'NoNotificationIDs': noNotifs})
+                await user.send(embed=embed)
 
     async def on_message(self, message: discord.Message):
         '''
@@ -34,8 +64,9 @@ class DiscordBot(discord.Client):
             return
 
         isMaster = message.author.id in self.masterIDs
+        isStaff = message.author.id in self.staffIDs or isMaster
         loweredMsg = message.content.lower()
-        words = loweredMsg.split()
+        words = message.content.split()
 
         # =====================================================
 
@@ -45,9 +76,9 @@ class DiscordBot(discord.Client):
                                    message.channel)
                 return
 
-            if message.author.id == message.mentions[0].id:
-                await errorMessage('You cannot vouch for yourself.', message.channel)
-                return
+            # if message.author.id == message.mentions[0].id:
+            #     await errorMessage('You cannot vouch for yourself.', message.channel)
+            #     return
 
             vouchMessage = ' '.join(words[2:])
             pendingChannel = self.get_channel(PENDING_VOUCHES_CHANNELID)
@@ -59,13 +90,23 @@ class DiscordBot(discord.Client):
 
         # =====================================================
 
-        elif loweredMsg.startswith(f'{PREFIX}dwc') and isMaster:
+        elif loweredMsg.startswith(f'{PREFIX}dwc') and isStaff:
             if len(message.mentions) == 0:
                 await errorMessage(f'Please follow this format: {PREFIX}dwc [@user]',
                                    message.channel)
                 return
 
             await adminCommands.dwc(message.mentions[0], message.channel)
+
+        # =====================================================
+
+        elif loweredMsg.startswith(f'{PREFIX}scammer') and isMaster:
+            if len(message.mentions) == 0:
+                await errorMessage(f'Please follow this format: {PREFIX}scammer [@user]',
+                                   message.channel)
+                return
+
+            await adminCommands.scammer(message.mentions[0], message.channel)
 
         # =====================================================
 
@@ -102,13 +143,49 @@ class DiscordBot(discord.Client):
 
         # =====================================================
 
+        elif loweredMsg.startswith(f'{PREFIX}verify') and isStaff:
+            if len(message.mentions) == 0:
+                await errorMessage(f'Please follow this format: {PREFIX}verify [@user]',
+                                   message.channel)
+                return
+
+            await adminCommands.verify(message.mentions[0], message.channel)
+
+        # =====================================================
+
         elif loweredMsg.startswith(f'{PREFIX}token'):
             await userCommands.token(message.author, message.channel)
 
         # =====================================================
 
-        elif loweredMsg.startswith(f'{PREFIX}admin') and isMaster:
-            pass
+        elif loweredMsg.startswith(f'{PREFIX}profile'):
+            if len(message.mentions) == 0:
+                user = message.author
+            else:
+                user = message.mentions[0]
+
+            await userCommands.profile(
+                targetUser=user,
+                bcGuild=self.get_guild(583416004974084107),
+                channel=message.channel
+            )
+
+        # =====================================================
+
+        elif loweredMsg.startswith(f'{PREFIX}link'):
+            if len(words) < 2:
+                await errorMessage(
+                    f'Please follow this format: {PREFIX}link [https://nulled.to/ link]',
+                    message.channel)
+                return
+
+            if 'https://nulled.to/' not in words[1]:
+                await errorMessage(
+                    'Please provide a proper nulled.to link!',
+                    message.channel)
+                return
+
+            await userCommands.link(message.author, words[1], message.channel)
 
         # =====================================================
 
@@ -122,6 +199,26 @@ class DiscordBot(discord.Client):
 
         # =====================================================
 
+        elif loweredMsg.startswith(f'{PREFIX}admin') and isMaster:
+            if len(message.mentions) == 0:
+                await errorMessage(f'Please follow this format: {PREFIX}admin [@user]',
+                                   message.channel)
+                return
+
+            await adminCommands.admin(message.mentions[0], message.channel)
+
+        # =====================================================
+
+        elif loweredMsg.startswith(f'{PREFIX}staff') and isMaster:
+            if len(message.mentions) == 0:
+                await errorMessage(f'Please follow this format: {PREFIX}admin [@user]',
+                                   message.channel)
+                return
+
+            await adminCommands.staff(message.mentions[0], message.channel)
+
+        # =====================================================
+
         elif loweredMsg.startswith(f'{PREFIX}blacklist') and isMaster:
             if len(message.mentions) == 0:
                 await errorMessage(f'Please follow this format: {PREFIX}blacklist [@user]',
@@ -131,7 +228,7 @@ class DiscordBot(discord.Client):
 
         # =====================================================
 
-        elif loweredMsg.startswith(f'{PREFIX}approve') and isMaster:
+        elif loweredMsg.startswith(f'{PREFIX}approve') and isStaff:
             if len(words) < 2 or not words[1].isdigit():
                 await errorMessage(f'Please follow this format: {PREFIX}approve [vouch ID]',
                                    message.channel)
@@ -141,7 +238,7 @@ class DiscordBot(discord.Client):
 
         # =====================================================
 
-        elif loweredMsg.startswith(f'{PREFIX}deny') and isMaster:
+        elif loweredMsg.startswith(f'{PREFIX}deny') and isStaff:
             if len(words) < 2 or not words[1].isdigit():
                 await errorMessage(f'Please follow this format: {PREFIX}approve [vouch ID]',
                                    message.channel)
@@ -151,7 +248,7 @@ class DiscordBot(discord.Client):
 
         # =====================================================
 
-        elif loweredMsg.startswith(f'{PREFIX}glist') and isMaster:
+        elif loweredMsg.startswith(f'{PREFIX}glist') and isStaff:
             await adminCommands.glist(message.channel)
 
         # =====================================================
@@ -160,6 +257,11 @@ class DiscordBot(discord.Client):
             await userCommands.help(PREFIX,
                                     message.channel,
                                     isMaster)
+
+        # =====================================================
+
+        elif loweredMsg.startswith(f'{PREFIX}about'):
+            await userCommands.about(message.channel, self.user.avatar_url)
 
         # =====================================================
 

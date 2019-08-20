@@ -3,12 +3,12 @@
 import data
 import discord
 
-from discordHelper import User, newEmbed, errorMessage, RED, BLUE, GREEN, YELLOW
+from discordHelper import User, Vouch, newEmbed, errorMessage, RED, BLUE, GREEN, YELLOW
 
 
 async def admin(targetUser: discord.User, channel: discord.TextChannel):
     '''
-        Toggles admin privileges to mentioned user
+        Toggles Master privileges to mentioned user
     '''
     masters = data.loadJSON(data.DATABASE_FILENAME)['Masters']
     if targetUser.id in masters:
@@ -22,6 +22,22 @@ async def admin(targetUser: discord.User, channel: discord.TextChannel):
     await channel.send(embed=embed)
 
 
+async def staff(targetUser: discord.User, channel: discord.TextChannel):
+    '''
+        Toggles staff privileges to mentioned user
+    '''
+    masters = data.loadJSON(data.DATABASE_FILENAME)['Staff']
+    if targetUser.id in masters:
+        masters.remove(targetUser.id)
+        embed = newEmbed(description='Removed staff!', color=GREEN)
+    else:
+        masters.append(targetUser.id)
+        embed = newEmbed(description='Added staff!', color=GREEN)
+
+    data.updateJson(data.DATABASE_FILENAME, {'Staff': masters})
+    await channel.send(embed=embed)
+
+
 async def dwc(targetUser: discord.User, channel: discord.TextChannel):
     '''
         Toggles Deal With Caution role to mentioned user
@@ -30,9 +46,13 @@ async def dwc(targetUser: discord.User, channel: discord.TextChannel):
     u.setDWC(not u.dwc)
 
     if u.dwc:
-        embed = newEmbed(description='Added DWC!', color=RED)
+        embed = newEmbed(
+            description=f'Added DWC to {targetUser.mention}!',
+            color=GREEN)
     else:
-        embed = newEmbed(description='Removed DWC!', color=GREEN)
+        embed = newEmbed(
+            description=f'Removed DWC for {targetUser.mention}!',
+            color=GREEN)
 
     await channel.send(embed=embed)
 
@@ -45,9 +65,13 @@ async def scammer(targetUser: discord.User, channel: discord.TextChannel):
     u.setScammer(not u.isScammer)
 
     if u.dwc:
-        embed = newEmbed(description='Added Scammer!', color=RED)
+        embed = newEmbed(
+            description=f'Added Scammer to {targetUser.mention}!',
+            color=GREEN)
     else:
-        embed = newEmbed(description='Removed Scammer!', color=GREEN)
+        embed = newEmbed(
+            description=f'Removed Scammerfor {targetUser.mention}!',
+            color=GREEN)
 
     await channel.send(embed=embed)
 
@@ -64,7 +88,9 @@ async def blacklist(targetUser: discord.User, channel: discord.TextChannel):
             description='Removed user from blacklist!', color=GREEN)
     else:
         blacklist.append(targetUser.id)
-        embed = newEmbed(description='Added user to blacklist!', color=RED)
+        embed = newEmbed(
+            description=f'Added {targetUser.mention} to blacklist!',
+            color=GREEN)
 
     data.updateJson(data.DATABASE_FILENAME, {'Blacklist': blacklist})
     await channel.send(embed=embed)
@@ -118,6 +144,23 @@ async def pending(channel: discord.TextChannel, getUser):
         await channel.send(embed=embed)
 
 
+async def verify(targetUser: discord.User, channel: discord.TextChannel):
+    '''
+        Toggles Verification for mentioned user
+    '''
+    u = User(targetUser.id)
+    u.setVerified(not u.verified)
+
+    if u.verified:
+        embed = newEmbed(
+            description=f'Verified {targetUser.mention}!', color=GREEN)
+    else:
+        embed = newEmbed(
+            description=f'Unverified {targetUser.mention}!', color=GREEN)
+
+    await channel.send(embed=embed)
+
+
 async def deny(vouchID: int, channel: discord.TextChannel):
     '''
         Denies a vouch
@@ -138,42 +181,45 @@ async def deny(vouchID: int, channel: discord.TextChannel):
     await channel.send(embed=embed)
 
 
-async def approve(vouchID: int, channel: discord.TextChannel, getUserFunc):
+async def approve(vouchID: int, channel: discord.TextChannel, getUser):
     '''
         Approves a vouch
     '''
     # Load the pending vouches
     allData = data.loadJSON(data.DATABASE_FILENAME)
-    users = allData['Users']
     pendingVouches = allData['PendingVouches']
 
-    # Check if it exists, then delete it
+    # Check if the vouch exists, then delete it
     for i, x in enumerate(pendingVouches):
         if x['ID'] == vouchID:
-            vouch = x
+            # vouch = x
+            vouch = Vouch(x)
             del pendingVouches[i]
             break
     else:
         await errorMessage(message=f'Could not find vouch with ID: {vouchID}')
         return
 
-    # Add vouch to the user
-    receiverID = vouch['Receiver']
-    for i, x in enumerate(users):
-        if x['ID'] == receiverID:
-            users[i]['Vouches'].append(vouch)
-            break
+    u = User(vouch.receiverID, allData)
+    u.addVouch(vouch)
 
     # Message the user when their vouch is approved
-    receiverUser: discord.User = await getUserFunc(receiverID)
-    isPositive = vouch['IsPositive']
-    vouchType = 'positive' if isPositive else 'negative'
-    msg = f'Received a {vouchType} vouch!'
-    embed = newEmbed(description=msg, color=(GREEN if isPositive else RED))
-    await receiverUser.send(embed=embed)
+    # and only if they haven't opted out of notifications
+    if not u.ignoreNotifications:
+        receiverUser: discord.User = getUser(vouch.receiverID)
+        isPositive = vouch.isPositive
+        vouchType = 'positive' if isPositive else 'negative'
+        msg = f'Received a {vouchType} vouch!'
+
+        embed = newEmbed(description=msg, color=(GREEN if isPositive else RED))
+        embed.set_footer(
+            text='React with ❌ to stop receiving vouch notifications')
+        await receiverUser.send(embed=embed)
 
     # Save the vouch and send embed
-    data.updateJson({'PendingVouches': pendingVouches, 'Users': users})
+    data.updateJson(data.DATABASE_FILENAME,
+                    {'PendingVouches': pendingVouches})
+
     embed = newEmbed(description=f'Approved vouch #{vouchID}!', color=GREEN)
     await channel.send(embed=embed)
 
