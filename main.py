@@ -9,7 +9,6 @@ import adminCommands
 from discordHelper import newEmbed, errorMessage, RED, BLUE, GREEN, YELLOW
 
 PREFIX = '+'
-PENDING_VOUCHES_CHANNELID = 613199581118988288
 
 
 class DiscordBot(discord.Client):
@@ -76,12 +75,12 @@ class DiscordBot(discord.Client):
                                    message.channel)
                 return
 
-            # if message.author.id == message.mentions[0].id:
-            #     await errorMessage('You cannot vouch for yourself.', message.channel)
-            #     return
+            if message.author.id == message.mentions[0].id:
+                await errorMessage('You cannot vouch for yourself.', message.channel)
+                return
 
             vouchMessage = ' '.join(words[2:])
-            pendingChannel = self.get_channel(PENDING_VOUCHES_CHANNELID)
+            pendingChannel = self.get_channel(config.PENDING_VOUCHES_CHANNELID)
             await userCommands.vouch(message.author,
                                      message.mentions[0],
                                      vouchMessage,
