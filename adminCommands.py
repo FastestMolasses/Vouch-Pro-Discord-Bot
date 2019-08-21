@@ -114,9 +114,15 @@ async def remove(targetUser: discord.User,
         await channel.send(embed=embed)
         return
 
-    u.removeVouch(vouchID)
+    success = u.removeVouch(vouchID)
+
+    if success:
+        description = 'Successfully removed vouch from profile.'
+    else:
+        description = f'Vouch #{vouchID} does not exist for this profile.'
+
     embed = newEmbed(
-        description='Successfully removed vouch from profile.', color=GREEN)
+        description=description, color=(GREEN if success else RED))
     await channel.send(embed=embed)
 
 

@@ -93,7 +93,7 @@ class User:
         self.verified = verified
         self.save()
 
-    def removeVouch(self, vouchID: int):
+    def removeVouch(self, vouchID: int) -> bool:
         '''
             Removes a vouch from the user and database
         '''
@@ -101,18 +101,31 @@ class User:
             if x.vouchID == vouchID:
                 del self.vouches[i]
                 break
+        else:
+            return False
+
         self.save()
+        return True
 
     def formatVouches(self) -> string:
         '''
             Lists the vouches in an organized string
         '''
-        s = ''
+        vouches = ''
+        prevLength = 0
+        # Combine all the vouch messages into a list
         for i in self.vouches:
             rate = 'Pos' if i.isPositive else 'Neg'
-            s += f'**ID** {i.vouchID} **{rate}** | {i.message}\n'
+            s = f'**ID** {i.vouchID} **{rate}** | {i.message}\n'
+            # We have to make sure the string total is less than
+            # 2048 characters otherwise discord wont send it
+            if len(vouches) + prevLength <= 2048:
+                prevLength += len(s)
+                vouches += s
+            else:
+                break
 
-        return s.strip()
+        return vouches.strip()
 
     def save(self):
         '''
