@@ -75,9 +75,9 @@ class DiscordBot(discord.Client):
                                    message.channel)
                 return
 
-            if message.author.id == message.mentions[0].id:
-                await errorMessage('You cannot vouch for yourself.', message.channel)
-                return
+            # if message.author.id == message.mentions[0].id:
+            #     await errorMessage('You cannot vouch for yourself.', message.channel)
+            #     return
 
             vouchMessage = ' '.join(words[2:])
             pendingChannel = self.get_channel(config.PENDING_VOUCHES_CHANNELID)

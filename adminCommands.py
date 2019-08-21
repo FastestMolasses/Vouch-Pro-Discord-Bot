@@ -130,7 +130,7 @@ async def pending(channel: discord.TextChannel, getUser):
     pendingVouches = data.loadJSON(data.DATABASE_FILENAME)['PendingVouches']
     if len(pendingVouches) == 0:
         embed = newEmbed(description='No pending vouches!', color=YELLOW)
-        channel.send(embed=embed)
+        await channel.send(embed=embed)
         return
 
     for i in pendingVouches:
