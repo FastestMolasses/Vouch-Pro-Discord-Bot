@@ -227,7 +227,8 @@ class DiscordBot(discord.Client):
 
         # =====================================================
 
-        elif loweredMsg.startswith(f'{PREFIX}approve') and isStaff:
+        elif (loweredMsg.startswith(f'{PREFIX}approve') or
+              loweredMsg.startswith(f'{PREFIX}accept')) and isStaff:
             if len(words) < 2 or not words[1].isdigit():
                 await errorMessage(f'Please follow this format: {PREFIX}approve [vouch ID]',
                                    message.channel)

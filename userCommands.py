@@ -119,10 +119,24 @@ async def profile(targetUser: discord.User, bcGuild: discord.Guild,
     # Add tags and comments
     embed.add_field(
         name='Tags', value=f'**Scammer:** {u.isScammer}\n**DWC:** {u.dwc}\n{verification}**Nulled Link:** {nulledLink}')
-    comments = '\n'.join(f'{i+1}) {x.message}' for i,
-                         x in enumerate(u.vouches))
-    if comments:
-        embed.add_field(name='Comments', value=comments, inline=False)
+
+    if u.vouches:
+        comments = []
+        prevLength = 0
+        # Combine all the vouch messages into a list
+        for i, x in enumerate(u.vouches):
+            comment = f'{i+1}) ' + x.message
+            # We have to make sure the string total is less than
+            # 1024 characters otherwise discord wont send it
+            if len(comment) + prevLength <= 1024:
+                prevLength += len(comment)
+                comments.append(comment)
+            else:
+                break
+        # Combine the comments into new lines
+        if comments:
+            comments = '\n'.join(comments)
+            embed.add_field(name='Comments', value=comments, inline=False)
 
     # Gather possible roles
     badges = []
