@@ -245,9 +245,6 @@ async def help(prefix: str, channel: discord.TextChannel, isMaster: bool = False
         embed.add_field(name=f'{prefix}reply [@user]',
                         value='Sends a message to the user with the bot.',
                         inline=False)
-        embed.add_field(name=f'{prefix}glist',
-                        value='Displays all the guilds that the bot is in.',
-                        inline=False)
 
     await channel.send(embed=embed)
 

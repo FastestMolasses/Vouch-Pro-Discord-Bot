@@ -241,10 +241,3 @@ async def reply(targetUser: discord.User, message: str, channel: discord.TextCha
     except Exception as e:
         print(e)
         await errorMessage('Could not send message to user!', channel)
-
-
-async def glist(channel: discord.TextChannel):
-    '''
-        Displays all the guilds that the bot is in
-    '''
-    pass

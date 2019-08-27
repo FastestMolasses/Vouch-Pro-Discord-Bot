@@ -248,11 +248,6 @@ class DiscordBot(discord.Client):
 
         # =====================================================
 
-        elif loweredMsg.startswith(f'{PREFIX}glist') and isStaff:
-            await adminCommands.glist(message.channel)
-
-        # =====================================================
-
         elif loweredMsg.startswith(f'{PREFIX}help'):
             await userCommands.help(PREFIX,
                                     message.channel,
