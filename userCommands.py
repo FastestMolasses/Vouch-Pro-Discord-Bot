@@ -6,8 +6,9 @@ import discord
 from discordHelper import User, newEmbed, errorMessage, RED, BLUE, GREEN, YELLOW, ORANGE
 
 
-async def vouch(user: discord.User, targetUser:
-                discord.User, message: str,
+async def vouch(user: discord.User,
+                targetUser: discord.User,
+                message: str,
                 curChannel: discord.TextChannel,
                 pendingVouchesChannel: discord.TextChannel):
     '''

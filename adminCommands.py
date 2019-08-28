@@ -187,7 +187,8 @@ async def deny(vouchID: int, channel: discord.TextChannel):
     await channel.send(embed=embed)
 
 
-async def approve(vouchID: int, channel: discord.TextChannel, getUser):
+async def approve(vouchID: int, channel: discord.TextChannel,
+                  logChannel: discord.TextChannel, getUser):
     '''
         Approves a vouch
     '''
@@ -208,11 +209,12 @@ async def approve(vouchID: int, channel: discord.TextChannel, getUser):
 
     u = User(vouch.receiverID, allData)
     u.addVouch(vouch)
+    receiverUser: discord.User = getUser(vouch.receiverID)
+    giverUser: discord.User = getUser(vouch.giverID)
 
     # Message the user when their vouch is approved
     # and only if they haven't opted out of notifications
     if not u.ignoreNotifications:
-        receiverUser: discord.User = getUser(vouch.receiverID)
         isPositive = vouch.isPositive
         vouchType = 'positive' if isPositive else 'negative'
         msg = f'Received a {vouchType} vouch!'
@@ -228,6 +230,17 @@ async def approve(vouchID: int, channel: discord.TextChannel, getUser):
 
     embed = newEmbed(description=f'Approved vouch #{vouchID}!', color=GREEN)
     await channel.send(embed=embed)
+
+    # Send embed to log channel
+    embed = newEmbed(description='', title=f'Vouch ID: {vouchID}')
+    embed.add_field(name='Type', value=(
+        'Pos' if isPositive else 'Neg'), inline=False)
+    embed.add_field(name='Receiver', value=receiverUser.name, inline=False)
+    embed.add_field(name='Giver', value=giverUser.name, inline=False)
+    embed.add_field(name='Comment', value=vouch.message, inline=False)
+    embed.set_footer(
+        text='Approved Vouch')
+    await logChannel.send(embed=embed)
 
 
 async def reply(targetUser: discord.User, message: str, channel: discord.TextChannel):

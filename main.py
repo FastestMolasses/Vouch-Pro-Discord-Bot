@@ -234,7 +234,9 @@ class DiscordBot(discord.Client):
                                    message.channel)
                 return
 
-            await adminCommands.approve(int(words[1]), message.channel, self.get_user)
+            logChannel = self.get_channel(config.LOG_CHANNEL_ID)
+            await adminCommands.approve(int(words[1]), message.channel,
+                                        logChannel, self.get_user)
 
         # =====================================================
 

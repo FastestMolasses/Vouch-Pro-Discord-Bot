@@ -1,5 +1,4 @@
 __pycache__/
 .vscode/
 todo.txt
-database.json
-database-old.json
+*.json
