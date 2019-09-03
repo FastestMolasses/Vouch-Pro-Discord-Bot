@@ -114,7 +114,7 @@ class User:
         vouches = ''
         prevLength = 0
         # Combine all the vouch messages into a list
-        for i in self.vouches:
+        for i in self.vouches[::-1]:
             rate = 'Pos' if i.isPositive else 'Neg'
             s = f'**ID** {i.vouchID} **{rate}** | {i.message}\n'
             # We have to make sure the string total is less than

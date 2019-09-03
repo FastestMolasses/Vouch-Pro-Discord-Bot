@@ -64,32 +64,32 @@ async def scammer(targetUser: discord.User, channel: discord.TextChannel):
     u = User(targetUser.id)
     u.setScammer(not u.isScammer)
 
-    if u.dwc:
+    if u.isScammer:
         embed = newEmbed(
             description=f'Added Scammer to {targetUser.mention}!',
             color=GREEN)
     else:
         embed = newEmbed(
-            description=f'Removed Scammerfor {targetUser.mention}!',
+            description=f'Removed Scammer for {targetUser.mention}!',
             color=GREEN)
 
     await channel.send(embed=embed)
 
 
-async def blacklist(targetUser: discord.User, channel: discord.TextChannel):
+async def blacklist(targetUserID: int, channel: discord.TextChannel):
     '''
         Toggles the blacklist for the mentioned
         user from vouching other people
     '''
     blacklist: list = data.loadJSON(data.DATABASE_FILENAME)['Blacklist']
-    if targetUser.id in blacklist:
-        blacklist.remove(targetUser.id)
+    if targetUserID in blacklist:
+        blacklist.remove(targetUserID)
         embed = newEmbed(
             description='Removed user from blacklist!', color=GREEN)
     else:
-        blacklist.append(targetUser.id)
+        blacklist.append(targetUserID)
         embed = newEmbed(
-            description=f'Added {targetUser.mention} to blacklist!',
+            description=f'Added to blacklist!',
             color=GREEN)
 
     data.updateJson(data.DATABASE_FILENAME, {'Blacklist': blacklist})
@@ -133,21 +133,27 @@ async def pending(channel: discord.TextChannel, getUser):
         await channel.send(embed=embed)
         return
 
+    ids = ''
     for i in pendingVouches:
-        vouchNum = i['ID']
-        receiverName = getUser(i['Receiver']).name
-        giverName = getUser(i['Giver']).name
+        ids += str(i['ID']) + (' | Positive' if i['IsPositive'] else ' | Negative') +'\n'
+    embed = newEmbed(description=ids, title='Pending vouches')
+    await channel.send(embed=embed)
 
-        # Send embed to pending channel
-        embed = newEmbed(description='', title=f'Vouch ID: {vouchNum}')
-        embed.add_field(name='Type', value=(
-            'Pos' if i['IsPositive'] else 'Neg'), inline=False)
-        embed.add_field(name='Receiver', value=receiverName, inline=False)
-        embed.add_field(name='Giver', value=giverName, inline=False)
-        embed.add_field(name='Comment', value=i['Message'], inline=False)
-        embed.set_footer(
-            text=f'+approve {vouchNum} | +deny {vouchNum} in order to assign this vouch')
-        await channel.send(embed=embed)
+    # for i in pendingVouches:
+    #     vouchNum = i['ID']
+    #     receiverName = getUser(i['Receiver']).name
+    #     giverName = getUser(i['Giver']).name
+
+    #     # Send embed to pending channel
+    #     embed = newEmbed(description='', title=f'Vouch ID: {vouchNum}')
+    #     embed.add_field(name='Type', value=(
+    #         'Pos' if i['IsPositive'] else 'Neg'), inline=False)
+    #     embed.add_field(name='Receiver', value=receiverName, inline=False)
+    #     embed.add_field(name='Giver', value=giverName, inline=False)
+    #     embed.add_field(name='Comment', value=i['Message'], inline=False)
+    #     embed.set_footer(
+    #         text=f'+approve {vouchNum} | +deny {vouchNum} in order to assign this vouch')
+    #     await channel.send(embed=embed)
 
 
 async def verify(targetUser: discord.User, channel: discord.TextChannel):
@@ -182,7 +188,7 @@ async def deny(vouchID: int, channel: discord.TextChannel):
         await errorMessage(message=f'Could not find vouch with ID: {vouchID}')
         return
 
-    data.updateJson({'PendingVouches': pendingVouches})
+    data.updateJson(data.DATABASE_FILENAME, {'PendingVouches': pendingVouches})
     embed = newEmbed(description=f'Deleted vouch #{vouchID}!', color=GREEN)
     await channel.send(embed=embed)
 

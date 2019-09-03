@@ -75,9 +75,9 @@ class DiscordBot(discord.Client):
                                    message.channel)
                 return
 
-            # if message.author.id == message.mentions[0].id:
-            #     await errorMessage('You cannot vouch for yourself.', message.channel)
-            #     return
+            if message.author.id == message.mentions[0].id:
+                await errorMessage('You cannot vouch for yourself.', message.channel)
+                return
 
             vouchMessage = ' '.join(words[2:])
             pendingChannel = self.get_channel(config.PENDING_VOUCHES_CHANNELID)
@@ -109,7 +109,7 @@ class DiscordBot(discord.Client):
 
         # =====================================================
 
-        elif loweredMsg.startswith(f'{PREFIX}pending') and isMaster:
+        elif loweredMsg.startswith(f'{PREFIX}pending') and isStaff:
             await adminCommands.pending(message.channel, self.get_user)
 
         # =====================================================
@@ -194,7 +194,8 @@ class DiscordBot(discord.Client):
                                    message.channel)
                 return
 
-            await userCommands.redeem(message.author, words[1], message.channel)
+            await userCommands.redeem(message.author, words[1],
+                                      message.channel, self.logChannel)
 
         # =====================================================
 
@@ -205,25 +206,40 @@ class DiscordBot(discord.Client):
                 return
 
             await adminCommands.admin(message.mentions[0], message.channel)
+            if message.mentions[0].id in self.masterIDs:
+                self.masterIDs.remove(message.mentions[0].id)
+            else:
+                self.masterIDs.append(message.mentions[0].id)
 
         # =====================================================
 
         elif loweredMsg.startswith(f'{PREFIX}staff') and isMaster:
             if len(message.mentions) == 0:
-                await errorMessage(f'Please follow this format: {PREFIX}admin [@user]',
+                await errorMessage(f'Please follow this format: {PREFIX}staff [@user]',
                                    message.channel)
                 return
 
             await adminCommands.staff(message.mentions[0], message.channel)
+            if message.mentions[0].id in self.staffIDs:
+                self.staffIDs.remove(message.mentions[0].id)
+            else:
+                self.staffIDs.append(message.mentions[0].id)
 
         # =====================================================
 
         elif loweredMsg.startswith(f'{PREFIX}blacklist') and isMaster:
             if len(message.mentions) == 0:
-                await errorMessage(f'Please follow this format: {PREFIX}blacklist [@user]',
-                                   message.channel)
-                return
-            await adminCommands.blacklist(message.mentions[0], message.channel)
+                if len(words) >= 2 and not words[1].isdigit():
+                    await errorMessage(f'Please follow this format: {PREFIX}blacklist [@user]',
+                                       message.channel)
+                    return
+
+            if len(message.mentions) != 0:
+                id = message.mentions[0].id
+            else:
+                id = int(words[1])
+
+            await adminCommands.blacklist(id, message.channel)
 
         # =====================================================
 
@@ -234,19 +250,23 @@ class DiscordBot(discord.Client):
                                    message.channel)
                 return
 
+            ids = [int(i) for i in words[1:] if i.isdigit()]
             logChannel = self.get_channel(config.LOG_CHANNEL_ID)
-            await adminCommands.approve(int(words[1]), message.channel,
-                                        logChannel, self.get_user)
+            for i in ids:
+                await adminCommands.approve(i, message.channel,
+                                            logChannel, self.get_user)
 
         # =====================================================
 
         elif loweredMsg.startswith(f'{PREFIX}deny') and isStaff:
             if len(words) < 2 or not words[1].isdigit():
-                await errorMessage(f'Please follow this format: {PREFIX}approve [vouch ID]',
+                await errorMessage(f'Please follow this format: {PREFIX}deny [vouch ID]',
                                    message.channel)
                 return
 
-            await adminCommands.deny(int(words[1]), message.channel)
+            ids = [int(i) for i in words[1:] if i.isdigit()]
+            for i in ids:
+                await adminCommands.deny(i, message.channel)
 
         # =====================================================
 

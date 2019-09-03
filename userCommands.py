@@ -59,7 +59,9 @@ async def vouch(user: discord.User,
     await pendingVouchesChannel.send(embed=embed)
 
 
-async def redeem(user: discord.User, token: str, channel: discord.TextChannel):
+async def redeem(user: discord.User, token: str,
+                 channel: discord.TextChannel,
+                 logChannel: discord.TextChannel):
     '''
         Redeems a token and transfers all vouches
         to the new account
@@ -74,6 +76,12 @@ async def redeem(user: discord.User, token: str, channel: discord.TextChannel):
                          title='Error', color=RED)
 
     await channel.send(embed=embed)
+
+    if success:
+        embed = newEmbed(
+            description=f'{user.mention} redeemed their vouches!',
+            title='Vouch redeemed!')
+        await logChannel.send(embed=embed)
 
 
 async def link(user: discord.User, link: str, channel: discord.TextChannel):
@@ -125,7 +133,7 @@ async def profile(targetUser: discord.User, bcGuild: discord.Guild,
         comments = []
         prevLength = 0
         # Combine all the vouch messages into a list
-        for i, x in enumerate(u.vouches):
+        for i, x in list(enumerate(u.vouches))[::-1]:
             comment = f'{i+1}) ' + x.message
             # We have to make sure the string total is less than
             # 1024 characters otherwise discord wont send it
