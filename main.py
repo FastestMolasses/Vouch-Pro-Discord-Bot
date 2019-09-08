@@ -69,9 +69,9 @@ class DiscordBot(discord.Client):
 
         # =====================================================
 
-        if loweredMsg.startswith(f'{PREFIX}vouch'):
+        if loweredMsg.startswith('+vouch') or loweredMsg.startswith('-vouch'):
             if len(message.mentions) == 0 or len(words) < 3:
-                await errorMessage(f'Please follow this format: {PREFIX}vouch [@user] [+ or -] [message]',
+                await errorMessage('Please follow this format: [+ or -]vouch [@user] [message]',
                                    message.channel)
                 return
 
@@ -80,10 +80,12 @@ class DiscordBot(discord.Client):
                 return
 
             vouchMessage = ' '.join(words[2:])
+            isPositive = loweredMsg[0] == '+'
             pendingChannel = self.get_channel(config.PENDING_VOUCHES_CHANNELID)
             await userCommands.vouch(message.author,
                                      message.mentions[0],
                                      vouchMessage,
+                                     isPositive,
                                      message.channel,
                                      pendingChannel)
 
@@ -149,6 +151,24 @@ class DiscordBot(discord.Client):
                 return
 
             await adminCommands.verify(message.mentions[0], message.channel)
+
+        # =====================================================
+
+        elif (loweredMsg.startswith('+add') or loweredMsg.startswith('-add')) and isMaster:
+            if len(message.mentions) == 0 or len(words) < 3:
+                await errorMessage(f'Please follow this format: [+ or -]add [@user] [message]',
+                                   message.channel)
+                return
+
+            vouchMessage = ' '.join(words[2:])
+            isPositive = loweredMsg[0] == '+'
+            logChannel = self.get_channel(config.LOG_CHANNEL_ID)
+            await adminCommands.add(message.author,
+                                    message.mentions[0],
+                                    vouchMessage,
+                                    isPositive,
+                                    message.channel,
+                                    logChannel)
 
         # =====================================================
 

@@ -22,6 +22,58 @@ async def admin(targetUser: discord.User, channel: discord.TextChannel):
     await channel.send(embed=embed)
 
 
+async def add(user: discord.User,
+              targetUser: discord.User,
+              message: str,
+              isPositive: bool,
+              curChannel: discord.TextChannel,
+              logChannel: discord.TextChannel):
+    '''
+        Leaves a vouch for a user
+    '''
+    u = User(user.id)
+
+    # Create a new vouch
+    d = data.loadJSON(data.DATABASE_FILENAME)
+    vouchNum: int = d['VouchCount'] + 1
+    vouch = {
+        'ID': vouchNum,
+        'Giver': user.id,
+        'Receiver': targetUser.id,
+        'IsPositive': isPositive,
+        'Message': message,
+    }
+    vouch = Vouch(vouch)
+    u.addVouch(vouch)
+
+    # Message the user when their vouch is approved
+    # and only if they haven't opted out of notifications
+    if not u.ignoreNotifications:
+        vouchType = 'positive' if isPositive else 'negative'
+        msg = f'Received a {vouchType} vouch!'
+
+        embed = newEmbed(description=msg, color=(GREEN if isPositive else RED))
+        embed.set_footer(
+            text='React with ❌ to stop receiving vouch notifications')
+        await targetUser.send(embed=embed)
+
+    # Send confirmation message
+    embed = newEmbed(
+        description=f'Added vouch to {targetUser.mention}', color=GREEN)
+    await curChannel.send(embed=embed)
+
+    # Send embed to log channel
+    embed = newEmbed(description='', title=f'Vouch ID: {vouchNum}')
+    embed.add_field(name='Type', value=(
+        'Pos' if isPositive else 'Neg'), inline=False)
+    embed.add_field(name='Receiver', value=targetUser.name, inline=False)
+    embed.add_field(name='Giver', value=user.name, inline=False)
+    embed.add_field(name='Comment', value=message, inline=False)
+    embed.set_footer(
+        text='Added Vouch')
+    await logChannel.send(embed=embed)
+
+
 async def staff(targetUser: discord.User, channel: discord.TextChannel):
     '''
         Toggles staff privileges to mentioned user
@@ -135,7 +187,8 @@ async def pending(channel: discord.TextChannel, getUser):
 
     ids = ''
     for i in pendingVouches:
-        ids += str(i['ID']) + (' | Positive' if i['IsPositive'] else ' | Negative') +'\n'
+        ids += str(i['ID']) + (' | Positive' if i['IsPositive']
+                               else ' | Negative') + '\n'
     embed = newEmbed(description=ids, title='Pending vouches')
     await channel.send(embed=embed)
 

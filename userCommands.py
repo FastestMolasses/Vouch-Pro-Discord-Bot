@@ -9,6 +9,7 @@ from discordHelper import User, newEmbed, errorMessage, RED, BLUE, GREEN, YELLOW
 async def vouch(user: discord.User,
                 targetUser: discord.User,
                 message: str,
+                isPositive: bool,
                 curChannel: discord.TextChannel,
                 pendingVouchesChannel: discord.TextChannel):
     '''
@@ -17,11 +18,6 @@ async def vouch(user: discord.User,
     u = User(user.id)
     if user.id in u.allData['Blacklist']:
         return
-
-    # Clean the message
-    isPositive = '-' not in message
-    if message[0] == '-' or message[0] == '+':
-        message = message[1:].strip()
 
     # Save to pending vouches
     d = data.loadJSON(data.DATABASE_FILENAME)
@@ -213,7 +209,7 @@ async def help(prefix: str, channel: discord.TextChannel, isMaster: bool = False
     embed = discord.Embed(title='Vouch Pro Commands',
                           color=(GREEN if isMaster else BLUE))
 
-    embed.add_field(name=f'{prefix}vouch [@user] [+ or -] [message]',
+    embed.add_field(name=f'[+ or -]vouch [@user] [message]',
                     value='Leave a positive or negative vouch for the user.',
                     inline=False)
     embed.add_field(name=f'{prefix}token',
@@ -238,6 +234,9 @@ async def help(prefix: str, channel: discord.TextChannel, isMaster: bool = False
                         inline=False)
         embed.add_field(name=f'{prefix}scammer [@user]',
                         value='Toggles the Scammer tag for the user',
+                        inline=False)
+        embed.add_field(name=f'[+ or -]add [@user] [message]',
+                        value='Leave a positive or negative vouch for the user.',
                         inline=False)
         embed.add_field(name=f'{prefix}blacklist [@user]',
                         value='Blacklists a user from vouching.',

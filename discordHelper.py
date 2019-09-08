@@ -10,6 +10,27 @@ YELLOW = 0xFFB400
 ORANGE = 0xFF7106
 
 
+class Vouch:
+    def __init__(self, vouchData: dict):
+        self.vouchID = vouchData.get('ID', -1)
+        self.message = vouchData.get('Message', '')
+        self.giverID = vouchData.get('Giver', 0)
+        self.receiverID = vouchData.get('Receiver', 0)
+        self.isPositive = vouchData.get('IsPositive', True)
+
+    def toDict(self) -> dict:
+        '''
+            Represents the Vouch object as a dictionary
+        '''
+        return {
+            'ID': self.vouchID,
+            'Message': self.message,
+            'Giver': self.giverID,
+            'Receiver': self.receiverID,
+            'IsPositive': self.isPositive,
+        }
+
+
 class User:
     def __init__(self, userID: int, allData: dict = None):
         self.userID = int(userID)
@@ -41,7 +62,7 @@ class User:
         if self.isNewUser:
             self.save()
 
-    def addVouch(self, vouch):
+    def addVouch(self, vouch: Vouch):
         '''
             Adds a vouch to the user and database
         '''
@@ -150,27 +171,6 @@ class User:
         else:
             self.users.append(d)
         data.updateJson(data.DATABASE_FILENAME, {'Users': self.users})
-
-
-class Vouch:
-    def __init__(self, vouchData: dict):
-        self.vouchID = vouchData.get('ID', -1)
-        self.message = vouchData.get('Message', '')
-        self.giverID = vouchData.get('Giver', 0)
-        self.receiverID = vouchData.get('Receiver', 0)
-        self.isPositive = vouchData.get('IsPositive', True)
-
-    def toDict(self) -> dict:
-        '''
-            Represents the Vouch object as a dictionary
-        '''
-        return {
-            'ID': self.vouchID,
-            'Message': self.message,
-            'Giver': self.giverID,
-            'Receiver': self.receiverID,
-            'IsPositive': self.isPositive,
-        }
 
 
 async def errorMessage(message: str, channel: discord.TextChannel):
