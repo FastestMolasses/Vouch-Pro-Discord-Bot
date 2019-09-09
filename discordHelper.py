@@ -50,7 +50,10 @@ class User:
         self.ignoreNotifications = userID in self.allData['NoNotificationIDs']
         self.isMaster = userID in self.allData['Masters']
         self.link = userData.get('Link', '')
-        self.dwc = userData.get('DWC', False)
+        self.dwc = userData.get('DWC', 0)
+        if self.dwc is False or self.dwc is True:
+            self.dwc = 0
+
         self.isScammer = userData.get('Scammer', False)
         self.token = userData.get('Token', generateToken())
         self.verified = userData.get('Verified', False)
@@ -93,7 +96,7 @@ class User:
         self.isScammer = scammer
         self.save()
 
-    def setDWC(self, dwc: bool):
+    def setDWC(self, dwc: int):
         '''
             Sets the Deal With Caution flag on the user
         '''

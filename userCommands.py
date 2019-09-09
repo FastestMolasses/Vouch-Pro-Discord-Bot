@@ -100,11 +100,11 @@ async def profile(targetUser: discord.User, bcGuild: discord.Guild,
     u = User(targetUser.id)
 
     # Decide a proper color
-    if u.isScammer:
+    if u.isScammer or u.dwc == 3:
         color = RED
-    elif u.dwc:
+    elif u.dwc == 2:
         color = ORANGE
-    elif u.negVouchCount > u.posVouchCount:
+    elif u.negVouchCount > u.posVouchCount or u.dwc == 1:
         color = YELLOW
     else:
         color = GREEN
@@ -121,9 +121,17 @@ async def profile(targetUser: discord.User, bcGuild: discord.Guild,
         verification = '❌' if not u.verified else '✅'
         verification = f'**Verification:**{verification}\n'
 
+    dwcMsg = {
+        '0': '',
+        '1': 'User denied an MM\n',
+        '2': 'User SCAMMED but REFUNDED\n',
+        '3': 'User has an open scam report\n',
+    }[str(u.dwc)]
+    dwcTitle = '' if u.dwc == 0 else f'**DWC {u.dwc}:** '
+
     # Add tags and comments
     embed.add_field(
-        name='Tags', value=f'**Scammer:** {u.isScammer}\n**DWC:** {u.dwc}\n{verification}**Nulled Link:** {nulledLink}')
+        name='Tags', value=f'**Scammer:** {u.isScammer}\n{dwcTitle}{dwcMsg}{verification}**Nulled Link:** {nulledLink}')
 
     if u.vouches:
         comments = []
@@ -141,39 +149,41 @@ async def profile(targetUser: discord.User, bcGuild: discord.Guild,
         # Combine the comments into new lines
         if comments:
             comments = '\n'.join(comments)
+            if len(comments) > 1024:
+                comments = comments[:1024]
             embed.add_field(name='Comments', value=comments, inline=False)
 
     # Gather possible roles
     badges = []
-    supporter_role = discord.utils.get(
-        bcGuild.roles, name='Supporters | Partners')
-    staff_role = discord.utils.get(bcGuild.roles, name='VP Staff')
-    developer_role = discord.utils.get(bcGuild.roles, name='Developer | Devs')
-    owner_role = discord.utils.get(bcGuild.roles, name='Owner | Founder')
-    sl_staff_role = discord.utils.get(bcGuild.roles, name='SL Staff')
-    trusted_role = discord.utils.get(bcGuild.roles, name='Trusted')
+    # supporter_role = discord.utils.get(
+    #     bcGuild.roles, name='Supporters | Partners')
+    # staff_role = discord.utils.get(bcGuild.roles, name='VP Staff')
+    # developer_role = discord.utils.get(bcGuild.roles, name='Developer | Devs')
+    # owner_role = discord.utils.get(bcGuild.roles, name='Owner | Founder')
+    # sl_staff_role = discord.utils.get(bcGuild.roles, name='SL Staff')
+    # trusted_role = discord.utils.get(bcGuild.roles, name='Trusted')
 
-    # Give out proper badges based on roles
-    for member in bcGuild.members:
-        if member == targetUser:
-            if owner_role in member.roles:
-                badges.append(
-                    '<:gem:5987915527222722861>**Owner**<:gem:598791552722272286>')
-            if supporter_role in member.roles:
-                badges.append(
-                    '<:beginner:598389073807278091>**Supporter**<:beginner:598389073807278091>')
-            if staff_role in member.roles:
-                badges.append(
-                    '<:beginner:598389073807278091>**Vouch Pro Staff**<:beginner:598389073807278091>')
-            if developer_role in member.roles:
-                badges.append(
-                    '<:beginner:598389073807278091>**Developer**<:beginner:598389073807278091>')
-            if sl_staff_role in member.roles:
-                badges.append(
-                    '<:beginner:598389073807278091>**SL Staff**<:beginner:598389073807278091>')
-            if trusted_role in member.roles:
-                badges.append(
-                    '<:star2:598788570437779495>**Trusted**<:star2:598788570437779495>')
+    # # Give out proper badges based on roles
+    # for member in bcGuild.members:
+    #     if member == targetUser:
+    #         if owner_role in member.roles:
+    #             badges.append(
+    #                 '<:gem:5987915527222722861>**Owner**<:gem:598791552722272286>')
+    #         if supporter_role in member.roles:
+    #             badges.append(
+    #                 '<:beginner:598389073807278091>**Supporter**<:beginner:598389073807278091>')
+    #         if staff_role in member.roles:
+    #             badges.append(
+    #                 '<:beginner:598389073807278091>**Vouch Pro Staff**<:beginner:598389073807278091>')
+    #         if developer_role in member.roles:
+    #             badges.append(
+    #                 '<:beginner:598389073807278091>**Developer**<:beginner:598389073807278091>')
+    #         if sl_staff_role in member.roles:
+    #             badges.append(
+    #                 '<:beginner:598389073807278091>**SL Staff**<:beginner:598389073807278091>')
+    #         if trusted_role in member.roles:
+    #             badges.append(
+    #                 '<:star2:598788570437779495>**Trusted**<:star2:598788570437779495>')
 
     formattedBadges = '\n'.join(badges)
     if len(badges) == 0:

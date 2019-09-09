@@ -90,16 +90,17 @@ async def staff(targetUser: discord.User, channel: discord.TextChannel):
     await channel.send(embed=embed)
 
 
-async def dwc(targetUser: discord.User, channel: discord.TextChannel):
+async def dwc(targetUser: discord.User, level: int,
+              channel: discord.TextChannel):
     '''
         Toggles Deal With Caution role to mentioned user
     '''
     u = User(targetUser.id)
-    u.setDWC(not u.dwc)
+    u.setDWC(level)
 
-    if u.dwc:
+    if level != 0:
         embed = newEmbed(
-            description=f'Added DWC to {targetUser.mention}!',
+            description=f'Added DWC{level} to {targetUser.mention}!',
             color=GREEN)
     else:
         embed = newEmbed(

@@ -97,7 +97,16 @@ class DiscordBot(discord.Client):
                                    message.channel)
                 return
 
-            await adminCommands.dwc(message.mentions[0], message.channel)
+            if 'dwc1' in loweredMsg:
+                level = 1
+            elif 'dwc2' in loweredMsg:
+                level = 2
+            elif 'dwc3' in loweredMsg:
+                level = 3
+            else:
+                level = 0
+
+            await adminCommands.dwc(message.mentions[0], level, message.channel)
 
         # =====================================================
 
