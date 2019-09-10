@@ -303,7 +303,8 @@ async def approve(vouchID: int, channel: discord.TextChannel,
     await logChannel.send(embed=embed)
 
 
-async def reply(targetUser: discord.User, message: str, channel: discord.TextChannel):
+async def reply(targetUser: discord.User, message: str,
+                channel: discord.TextChannel):
     '''
         Sends a message to a user, through the bot
     '''

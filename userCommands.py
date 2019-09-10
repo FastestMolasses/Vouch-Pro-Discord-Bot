@@ -280,3 +280,32 @@ async def about(channel: discord.TextChannel, avatarUrl):
     embed.set_footer(text='Endorsed by BCN')
 
     await channel.send(embed=embed)
+
+
+async def leaderboard(channel: discord.TextChannel, getUser, avatarURL):
+    users = data.loadJSON(data.DATABASE_FILENAME)['Users']
+
+    def sortUsers(x: dict):
+        return x.get('PositiveVouches', 0) - x.get('NegativeVouches', 0)
+
+    leaderboard = sorted(users, key=sortUsers, reverse=True)
+    leaderText = ''
+    for i, x in enumerate(leaderboard):
+        if i == 10:
+            break
+
+        score = x.get('PositiveVouches', 0) - x.get('NegativeVouches', 0)
+        name = str(getUser(x.get('ID')))
+        t = f'{i+1}) {name} - {score}'
+
+        # Add one because of the \n character
+        if len(t) + len(leaderText) + 1 < 1024:
+            leaderText += '\n' + t
+        else:
+            break
+
+    embed = newEmbed(description=leaderText, title='Leaderboard')
+    embed.set_footer(text='Endorsed by BCN')
+    embed.set_author(name='Vouch Pro', icon_url=avatarURL)
+    embed.set_thumbnail(url=avatarURL)
+    await channel.send(embed=embed)

@@ -125,14 +125,34 @@ class DiscordBot(discord.Client):
 
         # =====================================================
 
+        elif loweredMsg.startswith(f'{PREFIX}leaderboard') and isStaff:
+            await userCommands.leaderboard(message.channel, self.get_user, self.user.avatar_url)
+
+        # =====================================================
+
         elif loweredMsg.startswith(f'{PREFIX}reply') and isMaster:
-            if len(message.mentions) == 0 or len(words) <= 2:
-                await errorMessage(f'Please follow this format: {PREFIX}reply [@user]',
+            if len(words) < 3 or not words[1].isdigit():
+                await errorMessage(f'Please follow this format: {PREFIX}reply [vouch id] [message]',
+                                   message.channel)
+                return
+
+            targetUser = None
+            try:
+                vouchID = int(words[1])
+                users = data.loadJSON(data.DATABASE_FILENAME)['Users']
+                for i in users:
+                    for j in i['Vouches']:
+                        if j['ID'] == vouchID:
+                            targetUser = self.get_user(j['Giver'])
+
+            except Exception as e:
+                print(e)
+                await errorMessage(f'Please follow this format: {PREFIX}reply [vouch id] [message]',
                                    message.channel)
                 return
 
             replyMsg = ' '.join(words[2:])
-            await adminCommands.reply(message.mentions[0], replyMsg, message.channel)
+            await adminCommands.reply(targetUser, replyMsg, message.channel)
 
         # =====================================================
 
