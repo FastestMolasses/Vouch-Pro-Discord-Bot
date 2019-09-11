@@ -54,6 +54,7 @@ class User:
         if self.dwc is False or self.dwc is True:
             self.dwc = 0
 
+        self.dwcReason = userData.get('DWC Reason', '')
         self.isScammer = userData.get('Scammer', False)
         self.token = userData.get('Token', generateToken())
         self.verified = userData.get('Verified', False)
@@ -96,11 +97,12 @@ class User:
         self.isScammer = scammer
         self.save()
 
-    def setDWC(self, dwc: int):
+    def setDWC(self, dwc: int, reason: str):
         '''
             Sets the Deal With Caution flag on the user
         '''
         self.dwc = dwc
+        self.dwcReason = reason
         self.save()
 
     def setLink(self, link: str):
@@ -159,6 +161,7 @@ class User:
             'ID': self.userID,
             'Token': self.token,
             'DWC': self.dwc,
+            'DWC Reason': self.dwcReason,
             'Vouches': [i.toDict() for i in self.vouches],
             'Link': self.link,
             'Scammer': self.isScammer,

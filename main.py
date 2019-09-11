@@ -91,12 +91,7 @@ class DiscordBot(discord.Client):
 
         # =====================================================
 
-        elif loweredMsg.startswith(f'{PREFIX}dwc') and isStaff:
-            if len(message.mentions) == 0:
-                await errorMessage(f'Please follow this format: {PREFIX}dwc [@user]',
-                                   message.channel)
-                return
-
+        elif loweredMsg.startswith(f'{PREFIX}dwc') and isMaster:
             if 'dwc1' in loweredMsg:
                 level = 1
             elif 'dwc2' in loweredMsg:
@@ -106,7 +101,13 @@ class DiscordBot(discord.Client):
             else:
                 level = 0
 
-            await adminCommands.dwc(message.mentions[0], level, message.channel)
+            if len(message.mentions) == 0 or (level != 0 and len(words) < 3):
+                await errorMessage(f'Please follow this format: {PREFIX}dwc [@user] [reason]',
+                                   message.channel)
+                return
+
+            reason = ' '.join(words[2:]) if level != 0 else ''
+            await adminCommands.dwc(message.mentions[0], level, reason, message.channel)
 
         # =====================================================
 
@@ -125,7 +126,7 @@ class DiscordBot(discord.Client):
 
         # =====================================================
 
-        elif loweredMsg.startswith(f'{PREFIX}leaderboard') and isStaff:
+        elif loweredMsg.startswith(f'{PREFIX}leaderboard'):
             await userCommands.leaderboard(message.channel, self.get_user, self.user.avatar_url)
 
         # =====================================================
@@ -173,7 +174,7 @@ class DiscordBot(discord.Client):
 
         # =====================================================
 
-        elif loweredMsg.startswith(f'{PREFIX}verify') and isStaff:
+        elif loweredMsg.startswith(f'{PREFIX}verify') and isMaster:
             if len(message.mentions) == 0:
                 await errorMessage(f'Please follow this format: {PREFIX}verify [@user]',
                                    message.channel)
@@ -185,11 +186,19 @@ class DiscordBot(discord.Client):
 
         elif (loweredMsg.startswith('+add') or loweredMsg.startswith('-add')) and isMaster:
             if len(message.mentions) == 0 or len(words) < 3:
-                await errorMessage(f'Please follow this format: [+ or -]add [@user] [message]',
+                await errorMessage(f'Please follow this format: [+ or -]add [@user] [giverID (optional)] [message]',
                                    message.channel)
                 return
 
-            vouchMessage = ' '.join(words[2:])
+            # Check if they specify the giver ID
+            hasGiverID = False
+            giverID = 0
+            if words[2].isdigit():
+                hasGiverID = True
+                giverID = int(words[2])
+
+            vouchMessage = ' '.join(
+                words[3:]) if hasGiverID else ' '.join(words[2:])
             isPositive = loweredMsg[0] == '+'
             logChannel = self.get_channel(config.LOG_CHANNEL_ID)
             await adminCommands.add(message.author,
@@ -197,7 +206,8 @@ class DiscordBot(discord.Client):
                                     vouchMessage,
                                     isPositive,
                                     message.channel,
-                                    logChannel)
+                                    logChannel,
+                                    giverID)
 
         # =====================================================
 

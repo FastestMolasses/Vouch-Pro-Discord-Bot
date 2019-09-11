@@ -121,12 +121,7 @@ async def profile(targetUser: discord.User, bcGuild: discord.Guild,
         verification = '❌' if not u.verified else '✅'
         verification = f'**Verification:**{verification}\n'
 
-    dwcMsg = {
-        '0': '',
-        '1': 'User denied an MM\n',
-        '2': 'User SCAMMED but REFUNDED\n',
-        '3': 'User has an open scam report\n',
-    }[str(u.dwc)]
+    dwcMsg = u.dwcReason + '\n' if u.dwc > 0 else ''
     dwcTitle = '' if u.dwc == 0 else f'**DWC {u.dwc}:** '
 
     # Add tags and comments
@@ -239,13 +234,16 @@ async def help(prefix: str, channel: discord.TextChannel, isMaster: bool = False
         embed.add_field(name=f'{prefix}admin [@user]',
                         value='Toggles admin privelges for the user.',
                         inline=False)
+        embed.add_field(name=f'{prefix}dwc[1 or 2 or 3] [@user] [reason]',
+                        value='Adds the DWC tag for the user.',
+                        inline=False)
         embed.add_field(name=f'{prefix}dwc [@user]',
-                        value='Toggles the DWC tag for the user.',
+                        value='Removes the DWC tag for the user.',
                         inline=False)
         embed.add_field(name=f'{prefix}scammer [@user]',
                         value='Toggles the Scammer tag for the user',
                         inline=False)
-        embed.add_field(name=f'[+ or -]add [@user] [message]',
+        embed.add_field(name=f'[+ or -]add [@user] [giverID (optional)] [message]',
                         value='Leave a positive or negative vouch for the user.',
                         inline=False)
         embed.add_field(name=f'{prefix}blacklist [@user]',
@@ -260,8 +258,8 @@ async def help(prefix: str, channel: discord.TextChannel, isMaster: bool = False
         embed.add_field(name=f'{prefix}approve [vouch ID]',
                         value='Approves a vouch',
                         inline=False)
-        embed.add_field(name=f'{prefix}reply [@user]',
-                        value='Sends a message to the user with the bot.',
+        embed.add_field(name=f'{prefix}reply [vouch ID] [@user]',
+                        value='Sends a message to the vouch giver user with the bot.',
                         inline=False)
 
     await channel.send(embed=embed)
@@ -288,9 +286,11 @@ async def leaderboard(channel: discord.TextChannel, getUser, avatarURL):
     def sortUsers(x: dict):
         return x.get('PositiveVouches', 0) - x.get('NegativeVouches', 0)
 
+    # Sort the leader board by their vouch score
     leaderboard = sorted(users, key=sortUsers, reverse=True)
     leaderText = ''
     for i, x in enumerate(leaderboard):
+        # Only get the top 10 users
         if i == 10:
             break
 

@@ -27,7 +27,8 @@ async def add(user: discord.User,
               message: str,
               isPositive: bool,
               curChannel: discord.TextChannel,
-              logChannel: discord.TextChannel):
+              logChannel: discord.TextChannel,
+              giverID: int = 0):
     '''
         Leaves a vouch for a user
     '''
@@ -38,7 +39,7 @@ async def add(user: discord.User,
     vouchNum: int = d['VouchCount'] + 1
     vouch = {
         'ID': vouchNum,
-        'Giver': user.id,
+        'Giver': user.id if giverID == 0 else giverID,
         'Receiver': targetUser.id,
         'IsPositive': isPositive,
         'Message': message,
@@ -90,13 +91,15 @@ async def staff(targetUser: discord.User, channel: discord.TextChannel):
     await channel.send(embed=embed)
 
 
-async def dwc(targetUser: discord.User, level: int,
+async def dwc(targetUser: discord.User,
+              level: int,
+              reason: str,
               channel: discord.TextChannel):
     '''
         Toggles Deal With Caution role to mentioned user
     '''
     u = User(targetUser.id)
-    u.setDWC(level)
+    u.setDWC(level, reason)
 
     if level != 0:
         embed = newEmbed(
