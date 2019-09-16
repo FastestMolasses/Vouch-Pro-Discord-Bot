@@ -131,7 +131,7 @@ class DiscordBot(discord.Client):
 
         # =====================================================
 
-        elif loweredMsg.startswith(f'{PREFIX}reply') and isMaster:
+        elif loweredMsg.startswith(f'{PREFIX}reply') and isStaff:
             if len(words) < 3 or not words[1].isdigit():
                 await errorMessage(f'Please follow this format: {PREFIX}reply [vouch id] [message]',
                                    message.channel)
@@ -140,15 +140,17 @@ class DiscordBot(discord.Client):
             targetUser = None
             try:
                 vouchID = int(words[1])
-                users = data.loadJSON(data.DATABASE_FILENAME)['Users']
-                for i in users:
-                    for j in i['Vouches']:
-                        if j['ID'] == vouchID:
-                            targetUser = self.get_user(j['Giver'])
+                pending = data.loadJSON(data.DATABASE_FILENAME)['PendingVouches']
+                for i in pending:
+                    if i['ID'] == vouchID:
+                        targetUser = self.get_user(i['Giver'])
+                        break
+                else:
+                    raise Exception('User not found')
 
             except Exception as e:
                 print(e)
-                await errorMessage(f'Please follow this format: {PREFIX}reply [vouch id] [message]',
+                await errorMessage(f'Could not find user with ID {vouchID}',
                                    message.channel)
                 return
 

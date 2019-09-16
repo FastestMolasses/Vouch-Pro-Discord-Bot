@@ -196,22 +196,6 @@ async def pending(channel: discord.TextChannel, getUser):
     embed = newEmbed(description=ids, title='Pending vouches')
     await channel.send(embed=embed)
 
-    # for i in pendingVouches:
-    #     vouchNum = i['ID']
-    #     receiverName = getUser(i['Receiver']).name
-    #     giverName = getUser(i['Giver']).name
-
-    #     # Send embed to pending channel
-    #     embed = newEmbed(description='', title=f'Vouch ID: {vouchNum}')
-    #     embed.add_field(name='Type', value=(
-    #         'Pos' if i['IsPositive'] else 'Neg'), inline=False)
-    #     embed.add_field(name='Receiver', value=receiverName, inline=False)
-    #     embed.add_field(name='Giver', value=giverName, inline=False)
-    #     embed.add_field(name='Comment', value=i['Message'], inline=False)
-    #     embed.set_footer(
-    #         text=f'+approve {vouchNum} | +deny {vouchNum} in order to assign this vouch')
-    #     await channel.send(embed=embed)
-
 
 async def verify(targetUser: discord.User, channel: discord.TextChannel):
     '''
@@ -306,7 +290,8 @@ async def approve(vouchID: int, channel: discord.TextChannel,
     await logChannel.send(embed=embed)
 
 
-async def reply(targetUser: discord.User, message: str,
+async def reply(targetUser: discord.User,
+                message: str,
                 channel: discord.TextChannel):
     '''
         Sends a message to a user, through the bot
